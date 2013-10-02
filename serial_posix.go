@@ -73,7 +73,10 @@ func openPort(name string, baud int) (rwc io.ReadWriteCloser, err error) {
 	st.c_cflag &= ^C.tcflag_t(C.CSIZE)
 	st.c_cflag |= C.CS8
 
-	st.c_iflag &= ^C.tcflag_t(C.IXON | C.IXOFF | C.IXANY)
+	st.c_iflag &= ^C.tcflag_t(C.IXON)
+	st.c_iflag &= ^C.tcflag_t(C.IXOFF)
+	st.c_iflag &= ^C.tcflag_t(C.IXANY)
+	st.c_iflag &= ^C.tcflag_t(C.ICRNL)
 
 	// Select raw mode
 	st.c_lflag &= ^C.tcflag_t(C.ICANON | C.ECHO | C.ECHOE | C.ISIG)
