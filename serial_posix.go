@@ -56,6 +56,18 @@ func openPort(name string, baud int) (rwc io.ReadWriteCloser, err error) {
 		return nil, fmt.Errorf("Unknown baud rate %v", baud)
 	}
 
+	// Select local mode
+	st.c_cflag = C.tcflag_t(C.CLOCAL | C.CREAD | C.CS8 | C.CRTSCTS)
+
+	// Select raw mode
+	st.c_lflag = C.tcflag_t(0)
+	st.c_oflag = C.tcflag_t(0)
+	st.c_iflag = C.tcflag_t(0)
+
+	// Setup VMIN & VTIME
+	st.c_cc[C.VMIN] = 1
+	st.c_cc[C.VTIME] = 0
+
 	_, err = C.cfsetispeed(&st, speed)
 	if err != nil {
 		f.Close()
@@ -66,14 +78,6 @@ func openPort(name string, baud int) (rwc io.ReadWriteCloser, err error) {
 		f.Close()
 		return nil, err
 	}
-
-	// Select local mode
-	st.c_cflag = C.tcflag_t(C.CLOCAL | C.CREAD | C.CS8 | C.CRTSCTS)
-
-	// Select raw mode
-	st.c_lflag = C.tcflag_t(0)
-	st.c_oflag = C.tcflag_t(0)
-	st.c_iflag = C.tcflag_t(0)
 
 	_, err = C.tcsetattr(fd, C.TCSANOW, &st)
 	if err != nil {
