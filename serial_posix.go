@@ -1,4 +1,4 @@
-// +build !windows
+// +build !windows,cgo
 
 package serial
 
@@ -56,6 +56,18 @@ func openPort(name string, baud int) (rwc io.ReadWriteCloser, err error) {
 		return nil, fmt.Errorf("Unknown baud rate %v", baud)
 	}
 
+	// Select local mode
+	st.c_cflag = C.tcflag_t(C.CLOCAL | C.CREAD | C.CS8 | C.CRTSCTS)
+
+	// Select raw mode
+	st.c_lflag = C.tcflag_t(0)
+	st.c_oflag = C.tcflag_t(0)
+	st.c_iflag = C.tcflag_t(0)
+
+	// Setup VMIN & VTIME
+	st.c_cc[C.VMIN] = 1
+	st.c_cc[C.VTIME] = 0
+
 	_, err = C.cfsetispeed(&st, speed)
 	if err != nil {
 		f.Close()
@@ -67,23 +79,7 @@ func openPort(name string, baud int) (rwc io.ReadWriteCloser, err error) {
 		return nil, err
 	}
 
-	// Select local mode
-	st.c_cflag |= (C.CLOCAL | C.CREAD | C.CRTSCTS | C.CSTOPB)
-	st.c_cflag &= ^C.tcflag_t(C.PARENB)
-	st.c_cflag &= ^C.tcflag_t(C.CSIZE)
-	st.c_cflag |= C.CS8
-
-	st.c_iflag &= ^C.tcflag_t(C.IXON)
-	st.c_iflag &= ^C.tcflag_t(C.IXOFF)
-	st.c_iflag &= ^C.tcflag_t(C.IXANY)
-	st.c_iflag &= ^C.tcflag_t(C.ICRNL)
-
-	// Select raw mode
-	st.c_lflag &= ^C.tcflag_t(C.ICANON | C.ECHO | C.ECHOE | C.ISIG)
-	st.c_oflag &= ^C.tcflag_t(C.OPOST)
-	st.c_oflag &= ^C.tcflag_t(C.ONLCR)
-
-	_, err = C.tcsetattr(fd, C.TCSAFLUSH, &st)
+	_, err = C.tcsetattr(fd, C.TCSANOW, &st)
 	if err != nil {
 		f.Close()
 		return nil, err
