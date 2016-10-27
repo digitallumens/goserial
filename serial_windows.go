@@ -208,6 +208,12 @@ func setCommState(h syscall.Handle, baud int, databits byte, parity Parity, stop
 		return ErrBadStopBits
 	}
 
+	// Flow control
+	params.flags[0] |= 0x04  // fOutxCtsFlow
+	params.flags[0] &^= 0x08 // fOutxDsrFlow
+	params.flags[0] |= 0x10  // fDtrControl
+	params.flags[1] |= 0x10  // fRtsControl
+
 	r, _, err := syscall.Syscall(nSetCommState, 2, uintptr(h), uintptr(unsafe.Pointer(&params)), 0)
 	if r == 0 {
 		return err
