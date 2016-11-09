@@ -138,6 +138,9 @@ func openPort(name string, baud int, databits byte, parity Parity, stopbits Stop
 	st.c_cc[C.VMIN] = C.cc_t(vmin)
 	st.c_cc[C.VTIME] = C.cc_t(vtime)
 
+	// Flow control
+	st.c_cflag |= C.CRTSCTS
+
 	_, err = C.tcsetattr(fd, C.TCSANOW, &st)
 	if err != nil {
 		f.Close()
